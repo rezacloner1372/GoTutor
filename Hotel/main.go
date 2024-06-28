@@ -1,25 +1,29 @@
+// mini project for reserve room
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+)
 
 type Room struct {
 	ID       int
 	Type     string
-	Status   bool // true for reserved, false for available
 	BedCount int
 	Price    int
+	Status   bool // true = reserved false = available
 }
 
-var Rooms []Room = GenerateRooms() // خروجی فانکنش GenerateRooms
+// list of Rooms
+var Rooms []Room = GenerateRooms()
 
 func main() {
 	input := ""
 	for input != "exit" {
-		fmt.Println("Please select one of the following options:")
-		fmt.Println("1: Room list")
+		fmt.Println("Enter a command:")
+		fmt.Println("1: List room")
 		fmt.Println("2: Add room")
 		fmt.Println("3: Reserve room")
-		fmt.Println("4: Remove room")
 		fmt.Scanln(&input)
 		switch input {
 		case "1":
@@ -29,46 +33,18 @@ func main() {
 		case "3":
 			ReserveRoom()
 		case "4":
-			RemoveRoom()
+			RemoveRoome()
 		case "exit":
 			fmt.Println("Exiting...")
 			break
 		default:
-			fmt.Println("Invalid input")
+			fmt.Println("Invalid command")
 		}
 	}
 }
-
 func GetRoomList() {
 	for _, room := range Rooms {
 		fmt.Printf("%+v\n", room)
-	}
-}
-
-func GetRoomFromInput() Room {
-	var room Room = Room{Status: false}
-	fmt.Println("Enter room information line by line(ID, Type, BedCount, Price):")
-	fmt.Scanln(&room.ID, &room.Type, &room.BedCount, &room.Price)
-
-	return room
-}
-
-func AddRoom() {
-	room := GetRoomFromInput()
-	Rooms = append(Rooms, room)
-	fmt.Printf("Room added successfully: %+v\n", room)
-
-}
-
-func RemoveRoom() {
-	id := 0
-	fmt.Println("Enter room ID for removal:")
-	fmt.Scanln(&id)
-	for i := 0; i < len(Rooms); i++ {
-		if Rooms[i].ID == id {
-			Rooms = append(Rooms[:i], Rooms[i+1:]...)
-			return
-		}
 	}
 }
 
@@ -76,27 +52,31 @@ func ReserveRoom() {
 	id := 0
 	nights := 0
 	personCount := 0
-	fmt.Println("Enter room ID for reservation:")
+	fmt.Println("Enter room ID for reserervation")
 	fmt.Scanln(&id)
+	// get information from user
 	room := GetRoom(id)
 	if room == nil {
 		fmt.Println("Room not found")
 		return
-
 	}
-	if room.Status == true {
-		fmt.Println("Room already reserved")
+	if room.Status {
+		fmt.Println("Room is already reserved")
 		return
 	}
 
-	fmt.Println("Enter number of nights and personCount line by line:")
+	fmt.Println("Enter number of nights and personCount line by line: ")
 	fmt.Scanln(&nights)
 	fmt.Scanln(&personCount)
+	if !CheckPersonCount(*room, personCount) {
+		return
+	}
 	roomPrice, tax, discountAmount, fincalPrice := CalculateRoomPrice(*room, nights, personCount)
 	room.Status = true
 	fmt.Printf("Room Price: %f, tax: %f, discountAmount: %f, finalPrice: %f\n", roomPrice, tax, discountAmount, fincalPrice)
 
 }
+
 func GetRoom(id int) *Room {
 	for i := 0; i < len(Rooms); i++ {
 		if Rooms[i].ID == id {
@@ -133,8 +113,55 @@ func CalculateRoomPrice(room Room, nights int, personCount int) (roomPrice float
 
 }
 
-func GenerateRooms() []Room { // حروجی یک اسلایس از Room است
+// Check PersonCount and BedCount.
+// if PersonCount > BedCount, then return message to Guid User to select another room. List the rooms with sufficient bed count.
+func CheckPersonCount(room Room, personCount int) bool {
+	if personCount > room.BedCount {
+		fmt.Println("Person count is more than bed count. Please select another room \n You can select from the following rooms for your person count:")
+		for _, room := range Rooms {
+			if room.BedCount >= personCount {
+				fmt.Printf("%+v\n", room)
+			}
+		}
+		return false
+	}
+	return true
+}
+
+func GetRoomFromInput() Room {
+	var room Room = Room{Status: false}
+	fmt.Println("Enter room information line by line (ID, Type, BedCount, Price)")
+	fmt.Scanln(&room.ID)
+	fmt.Scanln(&room.Type)
+	fmt.Scanln(&room.BedCount)
+	fmt.Scanln(&room.Price)
+	return room
+}
+
+func AddRoom() {
+	room := GetRoomFromInput()
+	Rooms = append(Rooms, room)
+	fmt.Println("Room added successfully")
+
+}
+
+func RemoveRoome()  {
+	id := 0
+	fmt.Println("Enter room ID to remove")
+	fmt.Scanln(&id)
+	for i := 0; i < len(Rooms); i++ {
+		if Rooms[i].ID == id {
+			Rooms = append(Rooms[:i], Rooms[i+1:]...)
+			fmt.Println("Room removed successfully")
+			return
+		}
+	}
+}
+
+func GenerateRooms() []Room {
+	// slice of rooms
 	rooms := []Room{}
+
 	rooms = append(rooms, Room{ID: 1, Type: "Single", Status: false, BedCount: 1, Price: 100})
 	rooms = append(rooms, Room{ID: 2, Type: "Single", Status: false, BedCount: 1, Price: 120})
 	rooms = append(rooms, Room{ID: 3, Type: "Single", Status: false, BedCount: 1, Price: 150})
